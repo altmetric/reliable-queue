@@ -1,0 +1,24 @@
+{
+    "name": "altmetric/reliable-queue",
+    "description": "A library for reliable queueing with Redis",
+    "type": "library",
+    "require-dev": {
+        "phpunit/phpunit": "^5.5"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Paul Mucur",
+            "email": "mudge@mudge.name"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Altmetric\\": "src/"
+        }
+    },
+    "require": {
+        "ext-redis": "^2.2",
+        "psr/log": "^1.0"
+    }
+}
