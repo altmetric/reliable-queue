@@ -21,6 +21,10 @@ foreach ($queue as $work) {
 }
 ```
 
+## References
+
+* [Pattern: Reliable queue](http://redis.io/commands/rpoplpush#pattern-reliable-queue)
+
 ## License
 
 Copyright © 2016 Altmetric LLP
