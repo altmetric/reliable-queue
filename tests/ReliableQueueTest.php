@@ -2,7 +2,7 @@
 namespace Altmetric;
 
 use Altmetric\ReliableQueue;
-use PHPUnit\Framework\TestCase;
+use PHPUnit_Framework_TestCase as TestCase;
 use Psr\Log\NullLogger;
 use Redis;
 
