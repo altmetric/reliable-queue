@@ -77,6 +77,49 @@ class ReliableQueueTest extends TestCase
         $this->assertSame(['2'], $this->redis->lRange('queue-worker-test.working_on.alice', 0, -1));
     }
 
+    public function testEnqueueingWork()
+    {
+        $queue = $this->buildReliableQueue('alice', 'queue-worker-test');
+        $queue[] = 'foo';
+        $queue[] = 'bar';
+
+        $this->assertSame(['bar', 'foo'], $this->redis->lRange('queue-worker-test', 0, -1));
+    }
+
+    public function testAccessingWorkByOffset()
+    {
+        $queue = $this->buildReliableQueue('alice', 'queue-worker-test');
+        $this->redis->lPush('queue-worker-test', 1, 2, 3);
+
+        $this->assertEquals('2', $queue[1]);
+    }
+
+    public function testAccessingMissingWorkByOffset()
+    {
+        $queue = $this->buildReliableQueue('alice', 'queue-worker-test');
+        $this->redis->lPush('queue-worker-test', 1);
+
+        $this->assertNull($queue[1]);
+    }
+
+    public function testSettingWorkByOffset()
+    {
+        $queue = $this->buildReliableQueue('alice', 'queue-worker-test');
+        $this->redis->lPush('queue-worker-test', 1, 2);
+        $queue[1] = 'foo';
+
+        $this->assertSame(['2', 'foo'], $this->redis->lRange('queue-worker-test', 0, -1));
+    }
+
+    public function testUnsettingWorkByOffset()
+    {
+        $queue = $this->buildReliableQueue('alice', 'queue-worker-test');
+        $this->redis->lPush('queue-worker-test', 1, 3, 2, 3, 2, 3, 1);
+        unset($queue[3]);
+
+        $this->assertSame(['1', '3', '2', '2', '3', '1'], $this->redis->lRange('queue-worker-test', 0, -1));
+    }
+
     public function setUp()
     {
         $this->logger = new NullLogger();
