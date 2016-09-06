@@ -4,7 +4,7 @@ namespace Altmetric;
 use Redis;
 use Psr\Log\LoggerInterface;
 
-class ReliableQueue implements \Iterator
+class ReliableQueue implements \Iterator, \ArrayAccess
 {
     public $name;
     public $queue;
@@ -51,6 +51,39 @@ class ReliableQueue implements \Iterator
     {
         $this->finishCurrentWork();
         $this->fetchNewWork();
+    }
+
+    public function offsetExists($offset)
+    {
+        return $this->offsetGet($offset) !== null;
+    }
+
+    public function offsetGet($offset)
+    {
+        $value = $this->redis->lIndex($this->queue, $offset);
+        $value = $value === false ? null : $value;
+
+        return $value;
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        if (is_null($offset)) {
+            $this->redis->lPush($this->queue, $value);
+        } else {
+            $this->redis->lSet($this->queue, $offset, $value);
+        }
+    }
+
+    public function offsetUnset($offset)
+    {
+        $tempName = uniqid('altmetric/reliable-queue-deletion-');
+        $this
+            ->redis
+            ->multi()
+            ->lSet($this->queue, $offset, $tempName)
+            ->lRem($this->queue, $tempName, 1)
+            ->exec();
     }
 
     private function finishCurrentWork()
