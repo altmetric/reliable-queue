@@ -28,7 +28,7 @@ foreach ($queue as $work) {
 
 ## API Documentation
 
-### `ReliableQueue`
+### `public ReliableQueue::__construct(string $name, string $queue, Redis $redis, LoggerInterface $logger)`
 
 ```php
 $queue = new \Altmetric\ReliableQueue('unique-worker-name', 'to-do-queue', $redis, $logger);
@@ -41,7 +41,9 @@ Instantiate a new reliable queue object with the following arguments:
 * `$queue`: the `string` key of the list in Redis to use as the queue;
 * `$redis`: a [`Redis`](https://github.com/phpredis/phpredis) client object for
   communication with Redis;
-* `$logger`: a `Psr\Log\LoggerInterface`-compliant logger.
+* `$logger`: a
+  [`Psr\Log\LoggerInterface`](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md)-compliant
+  logger.
 
 The returned object implements both the
 [`Iterator`](http://php.net/manual/en/class.iterator.php) (and therefore
