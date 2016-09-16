@@ -2,7 +2,7 @@
 
 A PHP library for reliable queueing backed by [Redis](http://redis.io/).
 
-**Current version:** 0.2.0  
+**Current version:** 0.3.0  
 **Supported PHP versions:** 5.4, 5.5, 5.6, 7
 
 ## Installation
