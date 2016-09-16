@@ -10,6 +10,7 @@ class ChunkedReliableQueue implements \Iterator
     public $queue;
     public $size;
     public $workingQueue;
+    private $reliableQueue;
     private $redis;
     private $logger;
     private $value;
@@ -22,15 +23,12 @@ class ChunkedReliableQueue implements \Iterator
         $this->redis = $redis;
         $this->logger = $logger;
         $this->workingQueue = "{$queue}.working_on.{$name}";
+        $this->reliableQueue = new ReliableQueue($name, $queue, $redis, $logger);
     }
 
     public function rewind()
     {
-        while ($reply = $this->redis->rPopLPush($this->workingQueue, $this->queue)) {
-            $this->logger->debug("Pushed unfinished work from {$this->workingQueue} to {$this->queue}: {$reply}");
-        }
-
-        $this->logger->debug("Popping work from {$this->queue}");
+        $this->reliableQueue->rewind();
         $this->fetchNewWork();
     }
 
@@ -52,6 +50,7 @@ class ChunkedReliableQueue implements \Iterator
     public function next()
     {
         $this->finishCurrentWork();
+        $this->reliableQueue->next();
         $this->fetchNewWork();
     }
 
@@ -68,18 +67,11 @@ class ChunkedReliableQueue implements \Iterator
 
     private function fetchNewWork()
     {
-        while (true) {
-            $reply = $this->redis->bRPopLPush($this->queue, $this->workingQueue, 30);
-            if ($reply) {
-                $replies = $this->eagerlyFetchWork();
-                array_unshift($replies, $reply);
+        $reply = $this->reliableQueue->current();
+        $replies = $this->eagerlyFetchWork();
+        array_unshift($replies, $reply);
 
-                $this->value = $replies;
-                break;
-            }
-
-            $this->logger->debug("Timeout waiting for new work from {$this->queue}, trying again");
-        }
+        $this->value = $replies;
     }
 
     private function eagerlyFetchWork()
