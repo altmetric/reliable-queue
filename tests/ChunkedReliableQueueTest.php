@@ -15,7 +15,7 @@ class ChunkedReliableQueueTest extends TestCase
 
         $queue->rewind();
 
-        $this->assertSame(['1', '2'], $queue->current());
+        $this->assertSame(array('1', '2'), $queue->current());
     }
 
     public function testRewindSetsCurrentToAPartialChunk()
@@ -25,7 +25,7 @@ class ChunkedReliableQueueTest extends TestCase
 
         $queue->rewind();
 
-        $this->assertSame(['1'], $queue->current());
+        $this->assertSame(array('1'), $queue->current());
     }
 
     public function testNextSetsCurrentToPoppedWork()
@@ -36,7 +36,7 @@ class ChunkedReliableQueueTest extends TestCase
         $queue->rewind();
         $queue->next();
 
-        $this->assertSame(['3', '4'], $queue->current());
+        $this->assertSame(array('3', '4'), $queue->current());
     }
 
     public function testRewindPullsAChunkOfUnfinishedWork()
@@ -46,7 +46,7 @@ class ChunkedReliableQueueTest extends TestCase
 
         $queue->rewind();
 
-        $this->assertSame(['1', '2'], $queue->current());
+        $this->assertSame(array('1', '2'), $queue->current());
     }
 
     public function testNextFinishesWorkAndStoreCurrentInWorkingOn()
@@ -57,7 +57,7 @@ class ChunkedReliableQueueTest extends TestCase
         $queue->rewind();
         $queue->next();
 
-        $this->assertSame(['4', '3'], $this->redis->lRange('reliable-queue-test.working_on.alice', 0, -1));
+        $this->assertSame(array('4', '3'), $this->redis->lRange('reliable-queue-test.working_on.alice', 0, -1));
     }
 
     public function testKeyIsQueueName()

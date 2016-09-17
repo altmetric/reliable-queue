@@ -15,7 +15,7 @@ class ReliableQueueTest extends TestCase
 
         $queue->rewind();
 
-        $this->assertSame(['5', '4', '3', '2'], $this->redis->lRange('reliable-queue-test', 0, 5));
+        $this->assertSame(array('5', '4', '3', '2'), $this->redis->lRange('reliable-queue-test', 0, 5));
     }
 
     public function testWorkerIsAlwaysValid()
@@ -74,7 +74,7 @@ class ReliableQueueTest extends TestCase
         $queue->rewind();
         $queue->next();
 
-        $this->assertSame(['2'], $this->redis->lRange('reliable-queue-test.working_on.alice', 0, -1));
+        $this->assertSame(array('2'), $this->redis->lRange('reliable-queue-test.working_on.alice', 0, -1));
     }
 
     public function testEnqueueingWork()
@@ -83,7 +83,7 @@ class ReliableQueueTest extends TestCase
         $queue[] = 'foo';
         $queue[] = 'bar';
 
-        $this->assertSame(['bar', 'foo'], $this->redis->lRange('reliable-queue-test', 0, -1));
+        $this->assertSame(array('bar', 'foo'), $this->redis->lRange('reliable-queue-test', 0, -1));
     }
 
     public function testAccessingWorkByOffset()
@@ -108,7 +108,7 @@ class ReliableQueueTest extends TestCase
         $this->redis->lPush('reliable-queue-test', 1, 2);
         $queue[1] = 'foo';
 
-        $this->assertSame(['2', 'foo'], $this->redis->lRange('reliable-queue-test', 0, -1));
+        $this->assertSame(array('2', 'foo'), $this->redis->lRange('reliable-queue-test', 0, -1));
     }
 
     public function testUnsettingWorkByOffset()
@@ -117,7 +117,7 @@ class ReliableQueueTest extends TestCase
         $this->redis->lPush('reliable-queue-test', 1, 3, 2, 3, 2, 3, 1);
         unset($queue[3]);
 
-        $this->assertSame(['1', '3', '2', '2', '3', '1'], $this->redis->lRange('reliable-queue-test', 0, -1));
+        $this->assertSame(array('1', '3', '2', '2', '3', '1'), $this->redis->lRange('reliable-queue-test', 0, -1));
     }
 
     public function setUp()
