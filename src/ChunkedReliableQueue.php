@@ -76,7 +76,7 @@ class ChunkedReliableQueue implements \Iterator
 
     private function eagerlyFetchWork()
     {
-        $replies = [];
+        $replies = array();
         $pipeline = $this->redis->multi();
 
         for ($i = 1; $i < $this->size; $i += 1) {
