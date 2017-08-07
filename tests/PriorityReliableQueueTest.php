@@ -15,7 +15,7 @@ class PriorityReliableQueueTest extends TestCase
         $this->assertTrue($queue->valid());
     }
 
-   public function testRewindPushesAnyUnfinishedWork()
+    public function testRewindPushesAnyUnfinishedWork()
     {
         $queue = $this->buildPriorityReliableQueue('alice', array('reliable-queue-test'));
         $this->redis->lPush('reliable-queue-test.working_on.alice', 1, 2, 3, 4, 5);
@@ -25,7 +25,7 @@ class PriorityReliableQueueTest extends TestCase
         $this->assertSame(array('5', '4', '3', '2'), $this->redis->lRange('reliable-queue-test', 0, 5));
     }
 
-   public function testRewindPushesAnyUnfinishedWorkForAllQueues()
+    public function testRewindPushesAnyUnfinishedWorkForAllQueues()
     {
         $queue = $this->buildPriorityReliableQueue('alice', array('reliable-queue-test', 'reliable-queue-test-2'));
         $this->redis->lPush('reliable-queue-test-2.working_on.alice', 1, 2, 3, 4, 5);
@@ -95,15 +95,19 @@ class PriorityReliableQueueTest extends TestCase
         $this->assertEquals('1', $queue->current());
     }
 
-    public function testRewindPullsTheFirstPieceOfWorkFromFirstQueueBeforeSecond()
+    public function testRewindPullsTheFirstPieceOfWorkFromFirstQueueMoreOftenThanTheSecond()
     {
         $queue = $this->buildPriorityReliableQueue('alice', array('reliable-queue-test', 'reliable-queue-test-2'));
-        $this->redis->lPush('reliable-queue-test', 1, 2);
-        $this->redis->lPush('reliable-queue-test-2', 3, 4);
+        $distribution = $this->calculateDistribution(
+            function () use ($queue) {
+                $queue->rewind();
 
-        $queue->rewind();
+                return $queue->key();
+            },
+            $queue->queues
+        );
 
-        $this->assertEquals('1', $queue->current());
+        $this->assertGreaterThan($distribution['reliable-queue-test-2'], $distribution['reliable-queue-test']);
     }
 
     public function testNextSetsCurrentToPoppedWork()
@@ -128,29 +132,47 @@ class PriorityReliableQueueTest extends TestCase
         $this->assertEquals('2', $queue->current());
     }
 
-    public function testNextSetsCurrentToPoppedWorkFromFirstQueueBeforeSecond()
+    public function testNextSetsCurrentToPoppedWorkFromFirstQueueMoreOftenThanTheSecond()
     {
         $queue = $this->buildPriorityReliableQueue('alice', array('reliable-queue-test', 'reliable-queue-test-2'));
-        $this->redis->lPush('reliable-queue-test', 1, 2);
-        $this->redis->lPush('reliable-queue-test-2', 3, 4);
 
+        $this->redis->lPush('reliable-queue-test', 1);
+        $this->redis->lPush('reliable-queue-test-2', 2);
         $queue->rewind();
-        $queue->next();
 
-        $this->assertEquals('2', $queue->current());
+        $distribution = $this->calculateDistribution(
+            function () use ($queue) {
+                $queue->next();
+
+                return $queue->key();
+            },
+            $queue->queues
+        );
+
+        $this->assertGreaterThan(
+            $distribution['reliable-queue-test-2'],
+            $distribution['reliable-queue-test']
+        );
     }
 
-    public function testNextOnlyPullsFromSecondQueueOnceFirstIsEmpty()
+    public function testNextPullsFromTheSecondQueueSomeOfTheTime()
     {
         $queue = $this->buildPriorityReliableQueue('alice', array('reliable-queue-test', 'reliable-queue-test-2'));
-        $this->redis->lPush('reliable-queue-test', 1, 2);
-        $this->redis->lPush('reliable-queue-test-2', 3, 4);
 
+        $this->redis->lPush('reliable-queue-test', 1);
+        $this->redis->lPush('reliable-queue-test-2', 2);
         $queue->rewind();
-        $queue->next();
-        $queue->next();
 
-        $this->assertEquals('3', $queue->current());
+        $distribution = $this->calculateDistribution(
+            function () use ($queue) {
+                $queue->next();
+
+                return $queue->key();
+            },
+            $queue->queues
+        );
+
+        $this->assertGreaterThan(0, $distribution['reliable-queue-test-2']);
     }
 
     public function testNextFinishesWorkAndStoresCurrentInWorkingOn()
@@ -185,6 +207,26 @@ class PriorityReliableQueueTest extends TestCase
     public function tearDown()
     {
         $this->redis->del('reliable-queue-test', 'reliable-queue-test-2', 'reliable-queue-test.working_on.alice', 'reliable-queue-test-2.working_on.alice');
+    }
+
+    private function calculateDistribution($test, array $queues, $runs = 100)
+    {
+        $choices = array_fill_keys($queues, 0);
+        $distribution = array();
+
+        for ($i = 0; $i < $runs; $i++) {
+            foreach ($queues as $queue) {
+                $this->redis->lPush($queue, 'foo');
+            }
+
+            $choices[$test()] += 1;
+        }
+
+        foreach ($choices as $choice => $count) {
+            $distribution[$choice] = $count / $runs;
+        }
+
+        return $distribution;
     }
 
     private function buildPriorityReliableQueue($name, array $queues)

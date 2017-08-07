@@ -139,11 +139,11 @@ The returned object implements the
 PHP.
 
 This means that it can be iterated over with `foreach`, yielding the queue name
-and a value on every iteration. Queues will be checked for work in the order
-given in `$queues` meaning that any work in the first queue will take priority
-over work in the second, any work in the second queue will take priority over
-work in the third and so on. Internally, the library will repeatedly poll for
-new work but this is invisible from a client's perspective.
+and a value on every iteration. Queues will be checked randomly for work based
+on their priority order given in `$queues` meaning that the first queue will be
+checked more often than the second, the second more than the third and so on.
+Internally, the library will repeatedly poll for new work but this is invisible
+from a client's perspective.
 
 ```php
 foreach ($queue as $key => $work) {
@@ -155,6 +155,11 @@ foreach ($queue as $key => $work) {
 ## References
 
 * [Pattern: Reliable queue](http://redis.io/commands/rpoplpush#pattern-reliable-queue)
+
+## Acknowledgements
+
+* Thanks to [James Adam](https://github.com/lazyatom) for suggesting a way to
+  test the randomness of the priority queue.
 
 ## License
 
