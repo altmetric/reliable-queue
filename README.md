@@ -2,7 +2,7 @@
 
 A PHP library for reliable queueing backed by [Redis](http://redis.io/).
 
-**Current version:** 0.3.1  
+**Current version:** 0.4.0  
 **Supported PHP versions:** 5.3, 5.4, 5.5, 5.6, 7
 
 ## Installation
@@ -163,6 +163,6 @@ foreach ($queue as $key => $work) {
 
 ## License
 
-Copyright © 2016 Altmetric LLP
+Copyright © 2016-2017 Altmetric LLP
 
 Distributed under the MIT License.
