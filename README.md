@@ -17,6 +17,7 @@ $ composer require altmetric/reliable-queue
 <?php
 use Altmetric\ReliableQueue;
 use Altmetric\ChunkedReliableQueue;
+use Altmetric\PriorityReliableQueue;
 
 $queue = new ReliableQueue('unique-worker-name', 'to-do-queue', $redis, $logger);
 $queue[] = 'some-work';
@@ -30,6 +31,12 @@ $queue = new ChunkedReliableQueue('unique-worker-name', 100, 'to-do-queue', $red
 
 foreach ($queue as $chunk) {
     // $chunk will be an array of up to 100 pieces of work
+}
+
+$queue = new PriorityReliableQueue('unique-worker-name', array('critical-queue', 'default-queue', 'low-priority-queue'), $redis, $logger);
+
+foreach ($queue as $name => $work) {
+    // $work will be popped from the queue $name in the priority order given
 }
 ```
 
@@ -111,9 +118,48 @@ If the queue contains sufficient items, the chunk of work will contain at most
 `$size` elements but if there is not enough work, it may return less (but
 always at least 1 value).
 
+### `public PriorityReliableQueue:__construct(string $name, array $queues, Redis $redis, LoggerInterface $logger)`
+
+```php
+$queue = new \Altmetric\PriorityReliableQueue('unique-worker-name', array('critical-queue', 'default-queue', 'low-priority-queue'), $redis, $logger);
+```
+
+Instantiate a new priority-ordered, reliable queue object with the following arguments:
+
+* `$name`: a unique `string` name for this worker so that we can pick up any unfinished work in the event of a crash;
+* `$queues`: an `array` of `string` keys of lists in Redis to use as queues given in priority order;
+* `$redis`: a [`Redis`](https://github.com/phpredis/phpredis) client object for communication with Redis;
+* `$logger`: a
+  [`Psr\Log\LoggerInterface`](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md)-compliant
+  logger.
+
+The returned object implements the
+[`Iterator`](http://php.net/manual/en/class.iterator.php) (and therefore
+[`Traversable`](http://php.net/manual/en/class.traversable.php)) interface in
+PHP.
+
+This means that it can be iterated over with `foreach`, yielding the queue name
+and a value on every iteration. Queues will be checked randomly for work based
+on their priority order given in `$queues` meaning that the first queue will be
+checked more often than the second, the second more than the third and so on.
+Internally, the library will repeatedly poll for new work but this is invisible
+from a client's perspective.
+
+```php
+foreach ($queue as $key => $work) {
+    // $key will be the queue key name in Redis
+    // $work will be the value popped from the queue
+}
+```
+
 ## References
 
 * [Pattern: Reliable queue](http://redis.io/commands/rpoplpush#pattern-reliable-queue)
+
+## Acknowledgements
+
+* Thanks to [James Adam](https://github.com/lazyatom) for suggesting a way to
+  test the randomness of the priority queue.
 
 ## License
 
