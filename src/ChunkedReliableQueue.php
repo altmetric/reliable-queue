@@ -3,6 +3,7 @@ namespace Altmetric;
 
 use Redis;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class ChunkedReliableQueue implements \Iterator
 {
@@ -15,15 +16,20 @@ class ChunkedReliableQueue implements \Iterator
     private $logger;
     private $value;
 
-    public function __construct($name, $size, $queue, Redis $redis, LoggerInterface $logger)
+    public function __construct($name, $size, $queue, Redis $redis, LoggerInterface $logger = null)
     {
         $this->name = $name;
         $this->size = $size;
         $this->queue = $queue;
         $this->redis = $redis;
-        $this->logger = $logger;
         $this->workingQueue = "{$queue}.working_on.{$name}";
         $this->reliableQueue = new ReliableQueue($name, $queue, $redis, $logger);
+
+        if ($logger === null) {
+            $this->logger = new NullLogger();
+        } else {
+            $this->logger = $logger;
+        }
     }
 
     public function rewind()

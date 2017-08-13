@@ -3,6 +3,7 @@ namespace Altmetric;
 
 use Redis;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class ReliableQueue implements \Iterator, \ArrayAccess
 {
@@ -13,13 +14,18 @@ class ReliableQueue implements \Iterator, \ArrayAccess
     private $logger;
     private $value;
 
-    public function __construct($name, $queue, Redis $redis, LoggerInterface $logger)
+    public function __construct($name, $queue, Redis $redis, LoggerInterface $logger = null)
     {
         $this->name = $name;
         $this->queue = $queue;
         $this->redis = $redis;
-        $this->logger = $logger;
         $this->workingQueue = "{$queue}.working_on.{$name}";
+
+        if ($logger === null) {
+            $this->logger = new NullLogger();
+        } else {
+            $this->logger = $logger;
+        }
     }
 
     public function rewind()

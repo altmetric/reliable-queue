@@ -19,7 +19,7 @@ use Altmetric\ReliableQueue;
 use Altmetric\ChunkedReliableQueue;
 use Altmetric\PriorityReliableQueue;
 
-$queue = new ReliableQueue('unique-worker-name', 'to-do-queue', $redis, $logger);
+$queue = new ReliableQueue('unique-worker-name', 'to-do-queue', $redis);
 $queue[] = 'some-work';
 $queue[] = 'some-more-work';
 
@@ -27,13 +27,13 @@ foreach ($queue as $work) {
     // Perform some action on each piece of work in the to-do-queue
 }
 
-$queue = new ChunkedReliableQueue('unique-worker-name', 100, 'to-do-queue', $redis, $logger);
+$queue = new ChunkedReliableQueue('unique-worker-name', 100, 'to-do-queue', $redis);
 
 foreach ($queue as $chunk) {
     // $chunk will be an array of up to 100 pieces of work
 }
 
-$queue = new PriorityReliableQueue('unique-worker-name', array('critical-queue', 'default-queue', 'low-priority-queue'), $redis, $logger);
+$queue = new PriorityReliableQueue('unique-worker-name', array('critical-queue', 'default-queue', 'low-priority-queue'), $redis);
 
 foreach ($queue as $name => $work) {
     // $work will be popped from the queue $name in the priority order given
@@ -42,7 +42,7 @@ foreach ($queue as $name => $work) {
 
 ## API Documentation
 
-### `public ReliableQueue::__construct(string $name, string $queue, Redis $redis, LoggerInterface $logger)`
+### `public ReliableQueue::__construct(string $name, string $queue, Redis $redis[, LoggerInterface $logger])`
 
 ```php
 $queue = new \Altmetric\ReliableQueue('unique-worker-name', 'to-do-queue', $redis, $logger);
@@ -55,7 +55,7 @@ Instantiate a new reliable queue object with the following arguments:
 * `$queue`: the `string` key of the list in Redis to use as the queue;
 * `$redis`: a [`Redis`](https://github.com/phpredis/phpredis) client object for
   communication with Redis;
-* `$logger`: a
+* `$logger`: an optional
   [`Psr\Log\LoggerInterface`](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md)-compliant
   logger.
 
@@ -86,7 +86,7 @@ $queue[1] = 'work'; // sets work to index 1 in the queue
 unset($queue[1]);   // remove work at index 1 from the queue
 ```
 
-### `public ChunkedReliableQueue::__construct(string $name, int $size, string $queue, Redis $redis, LoggerInterface $logger)`
+### `public ChunkedReliableQueue::__construct(string $name, int $size, string $queue, Redis $redis[, LoggerInterface $logger])`
 
 ```php
 $queue = new \Altmetric\ChunkedReliableQueue('unique-worker-name', 100, 'to-do-queue', $redis, $logger);
@@ -100,7 +100,7 @@ Instantiate a new chunked, reliable queue object with the following arguments:
 * `$queue`: the `string` key of the list in Redis to use as the queue;
 * `$redis`: a [`Redis`](https://github.com/phpredis/phpredis) client object for
   communication with Redis;
-* `$logger`: a
+* `$logger`: an optional
   [`Psr\Log\LoggerInterface`](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md)-compliant
   logger.
 
@@ -118,7 +118,7 @@ If the queue contains sufficient items, the chunk of work will contain at most
 `$size` elements but if there is not enough work, it may return less (but
 always at least 1 value).
 
-### `public PriorityReliableQueue:__construct(string $name, array $queues, Redis $redis, LoggerInterface $logger)`
+### `public PriorityReliableQueue:__construct(string $name, array $queues, Redis $redis[, LoggerInterface $logger])`
 
 ```php
 $queue = new \Altmetric\PriorityReliableQueue('unique-worker-name', array('critical-queue', 'default-queue', 'low-priority-queue'), $redis, $logger);
@@ -129,7 +129,7 @@ Instantiate a new priority-ordered, reliable queue object with the following arg
 * `$name`: a unique `string` name for this worker so that we can pick up any unfinished work in the event of a crash;
 * `$queues`: an `array` of `string` keys of lists in Redis to use as queues given in priority order;
 * `$redis`: a [`Redis`](https://github.com/phpredis/phpredis) client object for communication with Redis;
-* `$logger`: a
+* `$logger`: an optional
   [`Psr\Log\LoggerInterface`](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md)-compliant
   logger.
 
