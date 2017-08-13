@@ -3,6 +3,7 @@ namespace Altmetric;
 
 use Redis;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class PriorityReliableQueue implements \Iterator
 {
@@ -15,12 +16,17 @@ class PriorityReliableQueue implements \Iterator
     private $workingQueues;
     private $workingQueue;
 
-    public function __construct($name, array $queues, Redis $redis, LoggerInterface $logger)
+    public function __construct($name, array $queues, Redis $redis, LoggerInterface $logger = null)
     {
         $this->name = $name;
         $this->queues = $queues;
         $this->redis = $redis;
-        $this->logger = $logger;
+
+        if ($logger === null) {
+            $this->logger = new NullLogger();
+        } else {
+            $this->logger = $logger;
+        }
 
         $numberOfQueues = count($queues);
         foreach ($queues as $index => $queue) {
