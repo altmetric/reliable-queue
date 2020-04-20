@@ -19,6 +19,9 @@ use Altmetric\ReliableQueue;
 use Altmetric\ChunkedReliableQueue;
 use Altmetric\PriorityReliableQueue;
 
+//Read timeout should be higher then BRPOPLPUSH timeout or -1 for infinity (PHP >=5.6)
+//$redis->setOption(Redis::OPT_READ_TIMEOUT, -1);
+
 $queue = new ReliableQueue('unique-worker-name', 'to-do-queue', $redis, $logger);
 $queue[] = 'some-work';
 $queue[] = 'some-more-work';
